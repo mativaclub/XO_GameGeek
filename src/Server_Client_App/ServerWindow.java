@@ -12,18 +12,18 @@ import java.util.List;
 public class ServerWindow extends JFrame {
     public static final int WIDTH = 400;
     public static final int HEIGHT = 300;
-    public static final String LOG_PATH = "src/server/log.txt";
+    public static final String LOG_PATH = "src/server/log.txt"; //path to file with history, where we save it
 
-    List<ClientGUI> clientGUIList;
+    private List<ClientGUI> clientGUIList; //list of clients
 
-    JButton btnStart, btnStop;
-    JTextArea log;
-    boolean work;
+    private JButton btnStart, btnStop;
+    private JTextArea log;
+    private boolean work; //flag that server is waiting for messages
 
     public ServerWindow(){
-        clientGUIList = new ArrayList<>();
+        clientGUIList = new ArrayList<>(); //initialization for empty list
 
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE); //upon clicking on x of the window everything will close
         setSize(WIDTH, HEIGHT);
         setResizable(false);
         setTitle("Chat server");
@@ -34,33 +34,28 @@ public class ServerWindow extends JFrame {
         setVisible(true);
     }
 
-    public boolean connectUser(ClientGUI clientGUI){
+    public boolean connectUser(ClientGUI clientGUI){ //Client call from server to connect himself
         if (!work){
             return false;
         }
-        clientGUIList.add(clientGUI);
+        clientGUIList.add(clientGUI); //if server is working, adding a client
         return true;
     }
 
-    public String getLog() {
-        return readLog();
-    }
-
-    public void disconnectUser(ClientGUI clientGUI){
-        clientGUIList.remove(clientGUI);
+    public void disconnectUser(ClientGUI clientGUI){ //Choosing which client to disconnect
+        clientGUIList.remove(clientGUI); //Client is removed from the list
         if (clientGUI != null){
-            clientGUI.disconnectFromServer();
+            clientGUI.disconnectFromServer(); //Telling client that he is disconnected and bring him start menu
         }
     }
 
     public void message(String text){
-        if (!work){
+        if (!work){ //If the server is working
             return;
         }
-        text += "";
-        appendLog(text);
-        answerAll(text);
-        saveInLog(text);
+        appendLog(text); //Add text
+        answerAll(text); //Send to all clients the same answer - method below
+        saveInLog(text); //Save the message to conversation history - method below
     }
 
     private void answerAll(String text){
@@ -70,22 +65,24 @@ public class ServerWindow extends JFrame {
     }
 
     private void saveInLog(String text){
-        try (FileWriter writer = new FileWriter(LOG_PATH, true)){
-            writer.write(text);
+        try (FileWriter writer = new FileWriter(LOG_PATH, true)){ //open stream
+            writer.write(text); //write the text
             writer.write("\n");
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    private String readLog(){
+    public String readLog(){ //reading data from file log - history of conversation
         StringBuilder stringBuilder = new StringBuilder();
-        try (FileReader reader = new FileReader(LOG_PATH);){
+        try (FileReader reader = new FileReader(LOG_PATH);){ //Read everything that is written there
             int c;
-            while ((c = reader.read()) != -1){
+            while ((c = reader.read()) != -1){ //-1 is the end of file
                 stringBuilder.append((char) c);
             }
-            stringBuilder.delete(stringBuilder.length()-1, stringBuilder.length());
+            if (!stringBuilder.isEmpty()) {
+                stringBuilder.delete(stringBuilder.length()-1, stringBuilder.length()); //Deleting last symbol \n
+            }
             return stringBuilder.toString();
         } catch (Exception e){
             e.printStackTrace();
@@ -94,7 +91,7 @@ public class ServerWindow extends JFrame {
     }
 
     private void appendLog(String text){
-        log.append(text + "\n");
+        log.append(text + "\n"); //Adding line break
     }
 
     private void createPanel() {
@@ -126,7 +123,7 @@ public class ServerWindow extends JFrame {
                 if (!work){
                     appendLog("Сервер уже был остановлен");
                 } else {
-                    work = false;
+                    work = false; //set working to false
                     while (!clientGUIList.isEmpty()){
                         disconnectUser(clientGUIList.get(clientGUIList.size()-1));
                     }
